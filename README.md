@@ -1,4 +1,4 @@
-#Packlink
+# Packlink
 Prepare a working, suitable for automation test suite for Packlink test
 
 ###Getting Started
@@ -14,7 +14,7 @@ Create virtualenv python 2.7 and activate it
 ` source ~/packlink/bin/activate`
 
 
-###Installing
+### Installing
 From path proyect cloned (*~/packlink*)
 
 ` python setup.py sdist`
