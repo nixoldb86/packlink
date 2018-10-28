@@ -1,0 +1,8 @@
+behave
+selenium
+
+[dev]
+check-manifest
+
+[test]
+coverage

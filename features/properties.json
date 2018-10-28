@@ -1,0 +1,20 @@
+{
+  "lang": "EN",
+  "evidences": {
+    "screenshots": false
+  },
+
+  "url": {
+    "base": "https://pro.packlink.es",
+    "register": "/registro",
+    "login": "/login",
+    "smart-analytics": "/smart-analytics",
+    "env": "pro"
+  },
+
+  "webdriver": {
+    "environment": "",
+    "remote_environment": "http://selenium:4444/wd/hub",
+    "browser": "chrome"
+  }
+}

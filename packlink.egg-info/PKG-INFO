@@ -1,0 +1,13 @@
+Metadata-Version: 2.1
+Name: packlink
+Version: 0.0.1
+Summary: Integration test of packlink
+Home-page: UNKNOWN
+Author: Alvaro Olmedo Mir
+Author-email: nixoldb@gmail.com
+License: UNKNOWN
+Description: Integration test of packlink
+Keywords: integration test packlink behave
+Platform: UNKNOWN
+Provides-Extra: test
+Provides-Extra: dev
