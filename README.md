@@ -24,6 +24,6 @@ From path proyect cloned (*~/packlink*)
 ` pip install packlink-0.0.1.tar.gz `
 
 ### Running 
-From features path (*~/packlink/packlink/features*)
+From path proyect cloned (*~/packlink*)
 
-`behave`
+`behave packlink/features`
