@@ -1,7 +1,7 @@
 # Packlink
 Prepare a working, suitable for automation test suite for Packlink test
 
-###Getting Started
+### Getting Started
 These instructions will get you a copy of the project up and running on your local machine for testing purposes. 
 
 ### Prerequisites
