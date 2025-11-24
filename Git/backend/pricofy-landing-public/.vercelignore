@@ -1,0 +1,12 @@
+# Archivos y carpetas a ignorar en Vercel
+node_modules
+.next
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+public/uploads
+*.log
+.DS_Store
+
