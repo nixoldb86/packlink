@@ -1,10 +1,11 @@
-// Search Results View Widget
+// Search Results View Widget - Redesigned
 //
-// Displays search results from the SearchProvider with:
-// - Toggle between list and cards view
-// - Search within results
-// - Filtering and sorting controls
-// - Pagination
+// Nueva estructura con secciones pero manteniendo componentes originales:
+// 1. SearchResultsHeader original (barra de búsqueda + ubicación + píldoras de países)
+// 2. SearchControlsBar original (buscar en resultados + filtros)
+// 3. Sección "Todos los resultados" (scroll vertical propio)
+// 4. Sección "Los más cercanos" (scroll horizontal)
+// 5. Sección "Los más económicos" (scroll vertical propio)
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -17,12 +18,10 @@ import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/providers/search_provider.dart';
 import '../../../../core/models/search_result.dart';
 import '../../../../core/models/search_filters.dart';
-import '../../../../core/models/sort_criteria.dart';
 import '../../../../shared/components/images/network_image_widget.dart';
-import '../../../../shared/components/loading/search_progress_indicator.dart';
-import '../../../../shared/components/loading/youtube_style_progress_bar.dart';
-import '../../../../shared/components/loading/animated_search_icon.dart';
 import '../../../../shared/components/loading/motivational_text_rotator.dart';
+import '../../../../shared/components/loading/youtube_style_progress_bar.dart';
+import '../../../../shared/components/badges/platform_icon_with_flag.dart';
 import '../../../../core/utils/country_flags.dart';
 import 'search_controls.dart';
 import 'search_result_detail_modal.dart';
@@ -32,7 +31,24 @@ import '../modals/search_type_modal.dart';
 import '../modals/registration_modal.dart';
 import '../../../../config/routes.dart';
 
-/// Widget que construye solo el header de búsqueda (para usar como stickyHeader)
+/// Search Results View - New design with original components
+class SearchResultsViewNew extends StatelessWidget {
+  const SearchResultsViewNew({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        const SearchResultsHeader(),
+        Expanded(
+          child: _SearchResultsSections(),
+        ),
+      ],
+    );
+  }
+}
+
+/// Header original con barra de búsqueda
 class SearchResultsHeader extends StatefulWidget {
   const SearchResultsHeader({super.key});
 
@@ -49,6 +65,9 @@ class _SearchResultsHeaderState extends State<SearchResultsHeader> {
   bool _showSearchTypeModal = false;
   bool _showRegistrationModal = false;
   String _pendingSearchText = '';
+  
+  // Controls bar expanded state
+  bool _isControlsExpanded = false;
 
   @override
   void initState() {
@@ -65,7 +84,6 @@ class _SearchResultsHeaderState extends State<SearchResultsHeader> {
   }
 
   void _onTextChanged() {
-    // Mark as editing when text differs from the last search
     final currentText = _searchController.text.trim();
     final searchText = _lastSearchText ?? '';
     if (currentText != searchText && !_isEditing) {
@@ -86,9 +104,7 @@ class _SearchResultsHeaderState extends State<SearchResultsHeader> {
   }
 
   void _executeClassicSearch() {
-    setState(() {
-      _showSearchTypeModal = false;
-    });
+    setState(() => _showSearchTypeModal = false);
     final searchProvider = context.read<SearchProvider>();
     final userLanguage = Localizations.localeOf(context).languageCode;
     searchProvider.startSearch(_pendingSearchText, userLanguage: userLanguage);
@@ -104,9 +120,7 @@ class _SearchResultsHeaderState extends State<SearchResultsHeader> {
       });
       return;
     }
-    setState(() {
-      _showSearchTypeModal = false;
-    });
+    setState(() => _showSearchTypeModal = false);
     final searchProvider = context.read<SearchProvider>();
     final userLanguage = Localizations.localeOf(context).languageCode;
     searchProvider.startSearch(_pendingSearchText, userLanguage: userLanguage);
@@ -122,109 +136,14 @@ class _SearchResultsHeaderState extends State<SearchResultsHeader> {
       });
       return;
     }
-    setState(() {
-      _showSearchTypeModal = false;
-    });
+    setState(() => _showSearchTypeModal = false);
     context.go('${AppRoutes.appSell}?product=${Uri.encodeComponent(_pendingSearchText)}');
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    final searchProvider = context.watch<SearchProvider>();
-
-    // Sync controller with provider's search text
-    if (_lastSearchText != searchProvider.searchText) {
-      _lastSearchText = searchProvider.searchText;
-      _searchController.text = searchProvider.searchText ?? '';
-      // Reset editing state when search text changes from provider
-      if (_isEditing) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) setState(() => _isEditing = false);
-        });
-      }
-    }
-
-    final isSearching = searchProvider.status == SearchStatus.searching;
-    final hasResults = searchProvider.hasResults;
-
-    return Stack(
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Barra de búsqueda con barra de progreso
-            _buildSearchBar(context, searchProvider, l10n),
-
-            // Motivational text - only when searching AND no results yet
-            if (isSearching && !hasResults) ...[
-              const SizedBox(height: 16),
-              const Center(child: MotivationalTextRotator()),
-            ],
-
-            const SizedBox(height: 12),
-
-            // Location indicator - shows where distances are calculated from
-            Row(
-              children: [
-                const LocationIndicator(),
-                const Spacer(),
-              ],
-            ),
-            const SizedBox(height: 8),
-
-            // Controles (filtros, ordenar, vista)
-            // Show as soon as we have any results (not waiting for all scrapers)
-            if (hasResults) ...[
-              const SearchControlsBar(),
-              const SizedBox(height: 12),
-            ],
-
-            // Chips de filtros activos
-            if (searchProvider.hasActiveFiltersOrSorting && hasResults) ...[
-              _buildActiveFiltersChips(context, searchProvider, l10n),
-              const SizedBox(height: 8),
-            ],
-          ],
-        ),
-        
-        // Modals
-        if (_showSearchTypeModal)
-          SearchTypeModal(
-            searchText: _pendingSearchText,
-            isGuestMode: !context.read<AuthProvider>().isAuthenticated,
-            onClose: () => setState(() => _showSearchTypeModal = false),
-            onClassicSearch: _executeClassicSearch,
-            onSmartSearch: _executeSmartSearch,
-            onSalesAnalysis: _executeSalesAnalysis,
-          ),
-        if (_showRegistrationModal)
-          RegistrationModal(
-            onClose: () => setState(() => _showRegistrationModal = false),
-            onRegister: () async {
-              setState(() => _showRegistrationModal = false);
-              // Redirigir a la landing para registro
-              final landingUrl = ApiConfig.isProduction
-                  ? 'https://pricofy.com/landing'
-                  : 'https://dev.pricofy.com/#/landing';
-              final uri = Uri.parse(landingUrl);
-              if (await canLaunchUrl(uri)) {
-                await launchUrl(uri, mode: LaunchMode.platformDefault);
-              }
-            },
-          ),
-      ],
-    );
-  }
-
   Widget _buildSearchBar(BuildContext context, SearchProvider searchProvider, dynamic l10n) {
-    // Check if mobile (< 768px - no sidebar visible)
     final isMobile = MediaQuery.of(context).size.width < 768;
-    final isSearching = searchProvider.status == SearchStatus.searching;
-
+    
     return Column(
-      mainAxisSize: MainAxisSize.min,
       children: [
         // Search bar
         Container(
@@ -242,7 +161,6 @@ class _SearchResultsHeaderState extends State<SearchResultsHeader> {
           ),
           child: Row(
             children: [
-              // Logo on mobile only (when sidebar is hidden)
               if (isMobile) ...[
                 Padding(
                   padding: const EdgeInsets.only(left: 8),
@@ -277,761 +195,827 @@ class _SearchResultsHeaderState extends State<SearchResultsHeader> {
                 ),
               ),
               Container(
-                width: 40,
-                height: 40,
                 margin: const EdgeInsets.only(right: 4),
                 decoration: BoxDecoration(
-                  color: AppTheme.primary600,
-                  shape: BoxShape.circle,
-                ),
-                child: IconButton(
-                  icon: AnimatedSearchIcon(
-                    isSearching: isSearching,
-                    isEditing: _isEditing,
-                    size: 20,
-                    color: Colors.white,
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                  padding: EdgeInsets.zero,
-                  onPressed: () => _handleSearchSubmit(_searchController.text),
+                  borderRadius: BorderRadius.circular(50),
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: _isEditing ? () => _handleSearchSubmit(_searchController.text) : null,
+                    borderRadius: BorderRadius.circular(50),
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isMobile ? 10 : 12,
+                        vertical: isMobile ? 10 : 8, // Menos padding vertical en desktop
+                      ),
+                      child: Icon(
+                        _isEditing ? Icons.arrow_forward : Icons.search,
+                        color: Colors.white,
+                        size: isMobile ? 20 : 24,
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ],
           ),
         ),
-        // YouTube-style progress bar (only visible when searching)
-        if (isSearching) ...[
-          const SizedBox(height: 8),
+        
+        // Progress bar
+        if (searchProvider.status == SearchStatus.searching)
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.only(top: 4),
             child: YouTubeStyleProgressBar(
-              progress: searchProvider.smoothedProgressPercent,
-              isVisible: true,
+              progress: searchProvider.progress?.progressPercent ?? 0.0,
             ),
           ),
-        ],
       ],
     );
   }
-
-  Widget _buildActiveFiltersChips(BuildContext context, SearchProvider searchProvider, dynamic l10n) {
-    final filters = searchProvider.filters;
-    final chips = <Widget>[];
-
-    // Sorting chips
-    for (final criteria in searchProvider.sortCriteria) {
-      if (!criteria.isDefault) {
-        chips.add(_buildSortChip(criteria, searchProvider, l10n));
-      }
-    }
-
-    // Separator
-    if (chips.isNotEmpty && (searchProvider.searchInResults.isNotEmpty || filters.hasActiveFilters)) {
-      chips.add(Container(width: 1, height: 24, margin: const EdgeInsets.symmetric(horizontal: 4), color: AppTheme.gray300));
-    }
-
-    // Filter chips
-    if (searchProvider.searchInResults.isNotEmpty) {
-      chips.add(_buildFilterChip('"${searchProvider.searchInResults}"', () => searchProvider.setSearchInResults('')));
-    }
-
-    if (filters.minPrice != null || filters.maxPrice != null) {
-      String priceText = filters.minPrice != null && filters.maxPrice != null
-          ? '${filters.minPrice!.toInt()}-${filters.maxPrice!.toInt()} €'
-          : filters.minPrice != null ? '> ${filters.minPrice!.toInt()} €' : '< ${filters.maxPrice!.toInt()} €';
-      chips.add(_buildFilterChip(priceText, () => searchProvider.applyFilters(filters.copyWith(clearMinPrice: true, clearMaxPrice: true)), color: Colors.green));
-    }
-
-    if (filters.maxDistance != null) {
-      chips.add(_buildFilterChip('< ${filters.maxDistance!.toInt()} km', () => searchProvider.applyFilters(filters.copyWith(clearMaxDistance: true)), color: Colors.blue));
-    }
-
-    if (filters.hasShipping != null) {
-      final shippingLabel = filters.hasShipping! ? l10n.shippingWithShipping : l10n.shippingInPerson;
-      chips.add(_buildFilterChip(shippingLabel, () => searchProvider.applyFilters(filters.copyWith(clearHasShipping: true)), color: Colors.teal));
-    }
-
-    for (final platform in filters.platforms) {
-      chips.add(_buildFilterChip(platform, () {
-        final newPlatforms = List<String>.from(filters.platforms)..remove(platform);
-        searchProvider.applyFilters(filters.copyWith(platforms: newPlatforms));
-      }));
-    }
-
-    if (chips.isNotEmpty) {
-      chips.add(TextButton(
-        onPressed: () {
-          searchProvider.clearFilters();
-          searchProvider.clearSorting();
-        },
-        style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 8)),
-        child: Text(l10n.commonClear, style: TextStyle(color: AppTheme.gray600, fontSize: 13)),
-      ));
-    }
-
-    return Wrap(spacing: 8, runSpacing: 8, children: chips);
-  }
-
-  Widget _buildSortChip(SortCriteria criteria, SearchProvider searchProvider, dynamic l10n) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: AppTheme.primary100,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.primary300),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          InkWell(
-            onTap: () => searchProvider.toggleSortCriterion(criteria.field),
-            child: Text(criteria.directionArrow, style: TextStyle(fontSize: 14, color: AppTheme.primary700, fontWeight: FontWeight.bold)),
-          ),
-          const SizedBox(width: 4),
-          Text(criteria.getFieldLabel(l10n), style: TextStyle(fontSize: 13, color: AppTheme.primary700, fontWeight: FontWeight.w500)),
-          const SizedBox(width: 4),
-          InkWell(
-            onTap: () => searchProvider.removeSortCriterion(criteria.field),
-            child: Icon(Icons.close, size: 16, color: AppTheme.primary600),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFilterChip(String label, VoidCallback onRemove, {Color? color}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: (color ?? AppTheme.primary600).withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: (color ?? AppTheme.primary600).withValues(alpha: 0.3)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(label, style: TextStyle(fontSize: 13, color: color ?? AppTheme.primary700, fontWeight: FontWeight.w500)),
-          const SizedBox(width: 4),
-          InkWell(onTap: onRemove, child: Icon(Icons.close, size: 16, color: color ?? AppTheme.primary600)),
-        ],
-      ),
-    );
-  }
-}
-
-/// Widget que construye el body de resultados de búsqueda
-class SearchResultsBody extends StatelessWidget {
-  final VoidCallback? onClearSearch;
-
-  const SearchResultsBody({super.key, this.onClearSearch});
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final searchProvider = context.watch<SearchProvider>();
 
-    // Contador de resultados - más prominente como en monolito
-    Widget? resultsCount;
-    if (searchProvider.status == SearchStatus.completed) {
-      final total = searchProvider.totalResults;
-      final hasFilters = searchProvider.filters.hasActiveFilters || searchProvider.searchInResults.isNotEmpty;
-      final filtered = searchProvider.filteredResultsCount;
-
-      resultsCount = Padding(
-        padding: const EdgeInsets.only(left: 4, bottom: 16),
-        child: Row(
-          children: [
-            Text(
-              l10n.dashboardResultsFound,
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.gray900,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppTheme.primary100,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                hasFilters ? '$filtered/$total' : '$total',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.primary700,
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
+    // Sync controller with provider's search text
+    if (_lastSearchText != searchProvider.searchText) {
+      _lastSearchText = searchProvider.searchText;
+      _searchController.text = searchProvider.searchText ?? '';
+      if (_isEditing) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) setState(() => _isEditing = false);
+        });
+      }
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    final isSearching = searchProvider.status == SearchStatus.searching;
+    final hasResults = searchProvider.hasResults;
+
+    return Stack(
       children: [
-        if (resultsCount != null) resultsCount,
-        _buildContent(context, searchProvider, l10n),
-      ],
-    );
-  }
+        Container(
+          color: Colors.white,
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Barra de búsqueda
+              _buildSearchBar(context, searchProvider, l10n),
 
-  Widget _buildContent(BuildContext context, SearchProvider searchProvider, dynamic l10n) {
-    // Show loading state when applying filters
-    if (searchProvider.isApplyingFilters) {
-      return _buildFilterLoadingState(l10n);
-    }
-
-    switch (searchProvider.status) {
-      case SearchStatus.idle:
-        return _buildEmptyState(l10n);
-      case SearchStatus.searching:
-        return _buildLoadingState(context, searchProvider, l10n);
-      case SearchStatus.completed:
-        if (searchProvider.filteredResults.isEmpty) {
-          if (searchProvider.hasActiveFilters && searchProvider.results.isNotEmpty) {
-            return _buildNoFilteredResultsState(searchProvider, l10n);
-          }
-          return _buildNoResultsState(l10n);
-        }
-        // Handle view mode: cards, list, or map
-        switch (searchProvider.viewMode) {
-          case ViewMode.cards:
-            return _buildCardsView(context, searchProvider, l10n);
-          case ViewMode.list:
-            return _buildListView(context, searchProvider, l10n);
-          case ViewMode.map:
-            // Map needs explicit height since it's inside a Column/ListView
-            return SizedBox(
-              height: MediaQuery.of(context).size.height * 0.7,
-              child: const SearchResultsMapView(),
-            );
-        }
-      case SearchStatus.error:
-        return _buildErrorState(context, searchProvider, l10n);
-    }
-  }
-
-  Widget _buildFilterLoadingState(dynamic l10n) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 24),
-      child: Center(
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(
-                color: AppTheme.primary600,
-                strokeWidth: 2,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Text(
-              l10n.dashboardApplyingFilters,
-              style: TextStyle(fontSize: 14, color: AppTheme.gray500),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEmptyState(dynamic l10n) {
-    return SizedBox(
-      height: 300,
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.search_off, size: 80, color: Colors.grey.shade300),
-            const SizedBox(height: 16),
-            Text(l10n.dashboardNoActiveSearch, style: const TextStyle(fontSize: 18, color: Colors.grey)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLoadingState(BuildContext context, SearchProvider searchProvider, dynamic l10n) {
-    final progress = searchProvider.progress;
-    final hasPartialResults = searchProvider.results.isNotEmpty;
-    final hasScraperTasks = progress != null && progress.scraperTasks.isNotEmpty;
-    final authProvider = context.watch<AuthProvider>();
-    final isAdmin = authProvider.isAdmin;
-
-    // Progress indicator with scraper chips - only visible for admin users
-    Widget? progressWidget;
-    if (isAdmin && progress != null && hasScraperTasks) {
-      progressWidget = SearchProgressIndicator(progress: progress);
-    }
-
-    // Build the loading UI
-    // Note: The search bar already shows the animated icon, progress bar,
-    // and motivational text rotator - no need for additional spinners here
-    return Column(
-      children: [
-        if (progressWidget != null) progressWidget,
-        if (hasPartialResults) ...[
-          const SizedBox(height: 8),
-          searchProvider.viewMode == ViewMode.cards
-              ? _buildCardsView(context, searchProvider, l10n)
-              : _buildListView(context, searchProvider, l10n),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildNoResultsState(dynamic l10n) {
-    return SizedBox(
-      height: 300,
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.inbox_outlined, size: 80, color: Colors.grey.shade300),
-            const SizedBox(height: 16),
-            Text(l10n.dashboardNoResultsFound, style: const TextStyle(fontSize: 18, color: Colors.grey)),
-            const SizedBox(height: 8),
-            Text(l10n.dashboardTryDifferentTerms, style: TextStyle(fontSize: 14, color: Colors.grey.shade600)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNoFilteredResultsState(SearchProvider searchProvider, dynamic l10n) {
-    return SizedBox(
-      height: 300,
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.filter_list_off, size: 80, color: Colors.grey.shade300),
-            const SizedBox(height: 16),
-            Text(l10n.dashboardNoResultsWithFilters, style: const TextStyle(fontSize: 18, color: Colors.grey)),
-            const SizedBox(height: 8),
-            Text(l10n.dashboardResultsAvailable(searchProvider.totalResults), style: TextStyle(fontSize: 14, color: Colors.grey.shade600)),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: () => searchProvider.clearFilters(),
-              icon: const Icon(Icons.clear),
-              label: Text(l10n.searchClearFilters),
-              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary600, foregroundColor: Colors.white),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildErrorState(BuildContext context, SearchProvider searchProvider, dynamic l10n) {
-    return SizedBox(
-      height: 300,
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.error_outline, size: 80, color: Colors.red.shade300),
-            const SizedBox(height: 16),
-            Text(l10n.dashboardSearchError, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.red)),
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32),
-              child: Text(searchProvider.error ?? '', style: TextStyle(fontSize: 14, color: Colors.grey.shade700), textAlign: TextAlign.center),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: () {
-                if (searchProvider.searchText != null) {
-                  final userLanguage = Localizations.localeOf(context).languageCode;
-                  searchProvider.startSearch(searchProvider.searchText!, userLanguage: userLanguage);
-                }
-              },
-              icon: const Icon(Icons.refresh),
-              label: Text(l10n.commonRetry),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCardsView(BuildContext context, SearchProvider searchProvider, dynamic l10n) {
-    // Use displayedResults for virtual pagination (not filteredResults)
-    final results = searchProvider.displayedResults;
-    final hasMore = searchProvider.hasMoreResults;
-    final isLoadingMore = searchProvider.isLoadingMore;
-
-    return Column(
-      children: [
-        LayoutBuilder(
-          builder: (context, constraints) {
-            const double targetCardWidth = 160;
-            const double spacing = 8;
-            int crossAxisCount = ((constraints.maxWidth + spacing) / (targetCardWidth + spacing)).floor().clamp(2, 8);
-            final double cardWidth = (constraints.maxWidth - (spacing * (crossAxisCount - 1))) / crossAxisCount;
-            final double cardHeight = cardWidth + 70;
-
-            return GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              padding: EdgeInsets.zero,
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: crossAxisCount,
-                crossAxisSpacing: spacing,
-                mainAxisSpacing: spacing,
-                childAspectRatio: cardWidth / cardHeight,
-              ),
-              itemCount: results.length,
-              itemBuilder: (context, index) => _ResultCard(key: ValueKey(results[index].id), result: results[index]),
-            );
-          },
-        ),
-        if (hasMore) _buildLoadMoreIndicator(isLoadingMore, l10n),
-        const SizedBox(height: 80),
-      ],
-    );
-  }
-
-  Widget _buildListView(BuildContext context, SearchProvider searchProvider, dynamic l10n) {
-    // Use displayedResults for virtual pagination (not filteredResults)
-    final results = searchProvider.displayedResults;
-    final hasMore = searchProvider.hasMoreResults;
-    final isLoadingMore = searchProvider.isLoadingMore;
-
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      padding: const EdgeInsets.only(bottom: 80),
-      itemCount: results.length + (hasMore ? 1 : 0),
-      itemBuilder: (context, index) {
-        if (index == results.length) return _buildLoadMoreIndicator(isLoadingMore, l10n);
-        return _ResultListItem(key: ValueKey(results[index].id), result: results[index]);
-      },
-    );
-  }
-
-  Widget _buildLoadMoreIndicator(bool isLoading, dynamic l10n) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      alignment: Alignment.center,
-      child: isLoading
-          ? Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primary600)),
-                const SizedBox(width: 12),
-                Text(l10n.commonLoadingMore, style: TextStyle(color: AppTheme.gray500)),
+              // Motivational text
+              if (isSearching && !hasResults) ...[
+                const SizedBox(height: 16),
+                const Center(child: MotivationalTextRotator()),
               ],
-            )
-          : Text(l10n.dashboardScrollToLoadMore, style: TextStyle(color: AppTheme.gray400)),
+
+              const SizedBox(height: 12),
+
+              // Location indicator + Country pills + Animated controls
+              // When controls are expanded, they take full width
+              if (hasResults && _isControlsExpanded)
+                AnimatedControlsBar(
+                  isExpanded: _isControlsExpanded,
+                  onToggle: () => setState(() => _isControlsExpanded = !_isControlsExpanded),
+                )
+              else
+                Row(
+                  children: [
+                    const LocationIndicator(),
+                    const SizedBox(width: 8),
+                    Expanded(child: _CountryPills()),
+                    if (hasResults) ...[
+                      const SizedBox(width: 8),
+                      AnimatedControlsBar(
+                        isExpanded: _isControlsExpanded,
+                        onToggle: () => setState(() => _isControlsExpanded = !_isControlsExpanded),
+                      ),
+                    ],
+                  ],
+                ),
+            ],
+          ),
+        ),
+        
+        // Modales
+        if (_showSearchTypeModal)
+          SearchTypeModal(
+            searchText: _pendingSearchText,
+            isGuestMode: !context.watch<AuthProvider>().isAuthenticated,
+            onClose: () => setState(() => _showSearchTypeModal = false),
+            onClassicSearch: _executeClassicSearch,
+            onSmartSearch: _executeSmartSearch,
+            onSalesAnalysis: _executeSalesAnalysis,
+          ),
+        if (_showRegistrationModal)
+          RegistrationModal(
+            onClose: () => setState(() => _showRegistrationModal = false),
+            onRegister: () async {
+              setState(() => _showRegistrationModal = false);
+              final landingUrl = ApiConfig.isProduction
+                  ? 'https://pricofy.com/landing'
+                  : 'https://dev.pricofy.com/#/landing';
+              final uri = Uri.parse(landingUrl);
+              if (await canLaunchUrl(uri)) {
+                await launchUrl(uri, mode: LaunchMode.platformDefault);
+              }
+            },
+          ),
+      ],
     );
   }
 }
 
-/// Card individual de resultado (grid view)
-class _ResultCard extends StatelessWidget {
+/// Píldoras de países (funcionan como filtros)
+class _CountryPills extends StatefulWidget {
+  @override
+  State<_CountryPills> createState() => _CountryPillsState();
+}
+
+class _CountryPillsState extends State<_CountryPills> {
+  Set<String> _selectedCountries = {};
+
+  void _applyCountryFilter(SearchProvider searchProvider) {
+    final currentFilters = searchProvider.filters;
+    final newFilters = currentFilters.copyWith(
+      countries: _selectedCountries.isEmpty ? null : _selectedCountries.toList(),
+    );
+    searchProvider.applyFilters(newFilters);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final searchProvider = context.watch<SearchProvider>();
+    final countries = searchProvider.availableCountries;
+
+    if (countries.isEmpty) return const SizedBox.shrink();
+
+    // Initialize all countries as selected if first time
+    if (_selectedCountries.isEmpty && countries.isNotEmpty) {
+      _selectedCountries = Set.from(countries);
+    }
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: countries.map((countryCode) {
+          final flag = getCountryFlagEmoji(countryCode);
+          final isSelected = _selectedCountries.contains(countryCode);
+          
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: InkWell(
+              onTap: () {
+                setState(() {
+                  if (isSelected) {
+                    _selectedCountries.remove(countryCode);
+                  } else {
+                    _selectedCountries.add(countryCode);
+                  }
+                });
+                _applyCountryFilter(searchProvider);
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: isSelected ? AppTheme.primary50 : AppTheme.gray100,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isSelected ? AppTheme.primary500 : AppTheme.gray300,
+                    width: isSelected ? 2 : 1,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(flag, style: const TextStyle(fontSize: 14)),
+                    const SizedBox(width: 4),
+                    Text(
+                      countryCode,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                        color: isSelected ? AppTheme.primary700 : AppTheme.gray700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+/// Secciones de resultados con scroll inteligente
+class _SearchResultsSections extends StatefulWidget {
+  @override
+  State<_SearchResultsSections> createState() => _SearchResultsSectionsState();
+}
+
+class _SearchResultsSectionsState extends State<_SearchResultsSections> {
+  final ScrollController _mainScrollController = ScrollController();
+  
+  // Controlar qué sección está activa para el scroll
+  bool _allResultsScrollActive = false;
+  bool _cheapestScrollActive = false;
+  
+  @override
+  void dispose() {
+    _mainScrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final searchProvider = context.watch<SearchProvider>();
+    
+    if (searchProvider.status == SearchStatus.searching && !searchProvider.hasResults) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    
+    if (!searchProvider.hasResults) {
+      return const Center(child: Text('No hay resultados'));
+    }
+
+    return SingleChildScrollView(
+      controller: _mainScrollController,
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 1. Sección "Todos los resultados"
+          _AllResultsSectionWithSmartScroll(
+            onScrollStateChanged: (active) {
+              setState(() => _allResultsScrollActive = active);
+            },
+            isActive: _allResultsScrollActive,
+          ),
+          const SizedBox(height: 32),
+          
+          // 2. Sección "Los más cercanos" (scroll horizontal - no conflicto)
+          _NearestResultsSection(),
+          const SizedBox(height: 32),
+          
+          // 3. Sección "Los más económicos"
+          _CheapestSectionWithSmartScroll(
+            onScrollStateChanged: (active) {
+              setState(() => _cheapestScrollActive = active);
+            },
+            isActive: _cheapestScrollActive,
+          ),
+          const SizedBox(height: 80), // Espacio para bottom nav
+        ],
+      ),
+    );
+  }
+}
+
+/// 1. Sección "Todos los resultados" con scroll inteligente
+class _AllResultsSectionWithSmartScroll extends StatefulWidget {
+  final Function(bool) onScrollStateChanged;
+  final bool isActive;
+
+  const _AllResultsSectionWithSmartScroll({
+    required this.onScrollStateChanged,
+    required this.isActive,
+  });
+
+  @override
+  State<_AllResultsSectionWithSmartScroll> createState() => _AllResultsSectionWithSmartScrollState();
+}
+
+class _AllResultsSectionWithSmartScrollState extends State<_AllResultsSectionWithSmartScroll> {
+  final ScrollController _scrollController = ScrollController();
+  DateTime? _lastScrollTime;
+  double _lastScrollPosition = 0;
+  
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  // Detecta si el scroll es "lento" (interacción dentro de la sección)
+  bool _isSlowScroll(ScrollNotification notification) {
+    if (notification is ScrollUpdateNotification) {
+      final now = DateTime.now();
+      if (_lastScrollTime != null) {
+        final timeDiff = now.difference(_lastScrollTime!).inMilliseconds;
+        final posDiff = (notification.metrics.pixels - _lastScrollPosition).abs();
+        
+        // Velocidad en pixels por milisegundo
+        if (timeDiff > 0) {
+          final velocity = posDiff / timeDiff;
+          // Si velocidad < 0.5 px/ms, es scroll lento (interacción de sección)
+          return velocity < 0.5;
+        }
+      }
+      _lastScrollTime = now;
+      _lastScrollPosition = notification.metrics.pixels;
+    }
+    return true;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final searchProvider = context.watch<SearchProvider>();
+    final results = searchProvider.filteredResults;
+    final viewMode = searchProvider.viewMode;
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Header
+        Text(
+          'Todos los resultados',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+            color: AppTheme.gray900,
+          ),
+        ),
+        const SizedBox(height: 12),
+        
+        // Vista de mapa ocupa toda la pantalla
+        if (viewMode == ViewMode.map)
+          SizedBox(
+            height: 500,
+            child: const SearchResultsMapView(),
+          )
+        else
+          // Resultados con scroll vertical propio
+          MouseRegion(
+            onEnter: (_) => widget.onScrollStateChanged(true),
+            onExit: (_) => widget.onScrollStateChanged(false),
+            child: GestureDetector(
+              onVerticalDragStart: (_) => widget.onScrollStateChanged(true),
+              onVerticalDragEnd: (_) => widget.onScrollStateChanged(false),
+              child: Container(
+                height: 500,
+                decoration: BoxDecoration(
+                  border: widget.isActive 
+                      ? Border.all(color: AppTheme.primary200, width: 2)
+                      : null,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: NotificationListener<ScrollNotification>(
+                  onNotification: (notification) {
+                    // Si el scroll es lento, lo manejamos aquí; si es rápido, lo dejamos pasar
+                    return widget.isActive && _isSlowScroll(notification);
+                  },
+                  child: ScrollConfiguration(
+                    behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
+                    child: viewMode == ViewMode.list
+                        ? ListView.builder(
+                            controller: _scrollController,
+                            physics: widget.isActive 
+                                ? const AlwaysScrollableScrollPhysics()
+                                : const NeverScrollableScrollPhysics(),
+                            itemCount: results.length,
+                            itemBuilder: (context, index) {
+                              return _ResultListItem(result: results[index]);
+                            },
+                          )
+                        : LayoutBuilder(
+                            builder: (context, constraints) {
+                              final cardWidth = 200.0;
+                              final spacing = 12.0;
+                              final availableWidth = constraints.maxWidth;
+                              final columnsCount = (availableWidth / (cardWidth + spacing)).floor();
+                              final actualColumns = columnsCount > 0 ? columnsCount : 1;
+                              
+                              return GridView.builder(
+                                controller: _scrollController,
+                                physics: widget.isActive 
+                                    ? const AlwaysScrollableScrollPhysics()
+                                    : const NeverScrollableScrollPhysics(),
+                                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: actualColumns,
+                                  crossAxisSpacing: spacing,
+                                  mainAxisSpacing: spacing,
+                                  childAspectRatio: 0.75,
+                                ),
+                                itemCount: results.length,
+                                itemBuilder: (context, index) {
+                                  return _ResultGridItem(result: results[index]);
+                                },
+                              );
+                            },
+                          ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// 2. Sección "Los más cercanos" (scroll horizontal)
+class _NearestResultsSection extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final searchProvider = context.watch<SearchProvider>();
+    
+    // Ordenar por cercanía
+    final nearestResults = List<SearchResult>.from(searchProvider.filteredResults)
+      ..sort((a, b) {
+        if (a.distance == null && b.distance == null) return 0;
+        if (a.distance == null) return 1;
+        if (b.distance == null) return -1;
+        return a.distance!.compareTo(b.distance!);
+      });
+
+    if (nearestResults.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Los más cercanos',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+            color: AppTheme.gray900,
+          ),
+        ),
+        const SizedBox(height: 12),
+        
+        // Scroll horizontal
+        SizedBox(
+          height: 320, // Aumentada para acomodar títulos largos
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: nearestResults.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            itemBuilder: (context, index) {
+              return SizedBox(
+                width: 200,
+                child: _ResultGridItem(result: nearestResults[index]),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// 3. Sección "Los más económicos" con scroll inteligente
+class _CheapestSectionWithSmartScroll extends StatefulWidget {
+  final Function(bool) onScrollStateChanged;
+  final bool isActive;
+
+  const _CheapestSectionWithSmartScroll({
+    required this.onScrollStateChanged,
+    required this.isActive,
+  });
+
+  @override
+  State<_CheapestSectionWithSmartScroll> createState() => _CheapestSectionWithSmartScrollState();
+}
+
+class _CheapestSectionWithSmartScrollState extends State<_CheapestSectionWithSmartScroll> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final searchProvider = context.watch<SearchProvider>();
+    
+    // Ordenar por precio
+    final cheapestResults = List<SearchResult>.from(searchProvider.filteredResults)
+      ..sort((a, b) => a.price.compareTo(b.price));
+
+    if (cheapestResults.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Los más económicos',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+            color: AppTheme.gray900,
+          ),
+        ),
+        const SizedBox(height: 12),
+        
+        // Resultados con scroll vertical propio
+        MouseRegion(
+          onEnter: (_) => widget.onScrollStateChanged(true),
+          onExit: (_) => widget.onScrollStateChanged(false),
+          child: GestureDetector(
+            onVerticalDragStart: (_) => widget.onScrollStateChanged(true),
+            onVerticalDragEnd: (_) => widget.onScrollStateChanged(false),
+            child: Container(
+              height: 500,
+              decoration: BoxDecoration(
+                border: widget.isActive 
+                    ? Border.all(color: AppTheme.primary200, width: 2)
+                    : null,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: ScrollConfiguration(
+                behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
+                child: ListView.builder(
+                  controller: _scrollController,
+                  physics: widget.isActive 
+                      ? const AlwaysScrollableScrollPhysics()
+                      : const NeverScrollableScrollPhysics(),
+                  itemCount: cheapestResults.length,
+                  itemBuilder: (context, index) {
+                    return _ResultListItem(result: cheapestResults[index]);
+                  },
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Shipping indicator - always visible, crossed out when not shippable
+class _ShippingIndicator extends StatelessWidget {
+  final bool isShippable;
+  final double size;
+
+  const _ShippingIndicator({required this.isShippable, this.size = 14});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: size,
+      height: size,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Icon(
+            Icons.local_shipping_outlined,
+            size: size,
+            color: isShippable ? AppTheme.gray500 : AppTheme.gray300,
+          ),
+          if (!isShippable)
+            CustomPaint(
+              size: Size(size, size),
+              painter: _StrikeThroughPainter(color: AppTheme.gray400),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Custom painter for diagonal strike-through line
+class _StrikeThroughPainter extends CustomPainter {
+  final Color color;
+  _StrikeThroughPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.5
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(
+      Offset(size.width * 0.8, size.height * 0.2),
+      Offset(size.width * 0.2, size.height * 0.8),
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+/// Item de resultado en modo lista (diseño de "Los más económicos")
+class _ResultListItem extends StatelessWidget {
   final SearchResult result;
-  const _ResultCard({super.key, required this.result});
+
+  const _ResultListItem({required this.result});
+
+  void _showDetailModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => SearchResultDetailModal(result: result),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: AppTheme.gray200),
+      ),
+      child: InkWell(
+        onTap: () => _showDetailModal(context),
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(10),
+          child: Row(
+            children: [
+              // Imagen (más pequeña para hacer la card más estrecha)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: result.hasImage
+                    ? NetworkImageWidget(
+                        key: ValueKey(result.imageUrl),
+                        imageUrl: result.imageUrl!,
+                        width: 60,
+                        height: 60,
+                        fit: BoxFit.cover,
+                      )
+                    : Container(
+                        width: 60,
+                        height: 60,
+                        color: AppTheme.gray200,
+                        child: Icon(Icons.image_outlined, size: 24, color: AppTheme.gray400),
+                      ),
+              ),
+              const SizedBox(width: 12),
+              
+              // Información
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      result.title,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        height: 1.2, // Reduced line height
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${result.price.toStringAsFixed(2)} €',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.primary600,
+                        height: 1.0, // Tight line height
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Row(
+                      children: [
+                        _ShippingIndicator(isShippable: result.isShippable, size: 14),
+                        const SizedBox(width: 8),
+                        Icon(Icons.near_me, size: 12, color: AppTheme.gray500),
+                        const SizedBox(width: 2),
+                        Text(
+                          result.distance != null ? '${result.distance!.toStringAsFixed(0)} km' : '-',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppTheme.gray600,
+                            height: 1.0, // Tight line height
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              
+              // Platform icon with flag
+              PlatformIconWithFlag(
+                platform: result.platform,
+                countryCode: result.countryCode,
+                size: 32,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Item de resultado en modo cuadrícula (para "Los más cercanos")
+class _ResultGridItem extends StatelessWidget {
+  final SearchResult result;
+
+  const _ResultGridItem({required this.result});
+
+  void _showDetailModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => SearchResultDetailModal(result: result),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Card(
       elevation: 2,
-      margin: EdgeInsets.zero,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: AppTheme.gray200)),
       clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: InkWell(
         onTap: () => _showDetailModal(context),
-        child: Padding(
-          padding: const EdgeInsets.all(8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              AspectRatio(
-                aspectRatio: 1.0, // Proporción 1:1 (cuadrada) para todas las imágenes
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: result.hasImage
-                      ? IgnorePointer(child: NetworkImageWidget(imageUrl: result.imageUrl!, fit: BoxFit.cover, errorBuilder: (_, __) => _buildPlaceholder()))
-                      : _buildPlaceholder(),
-                ),
-              ),
-              const SizedBox(height: 6),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Text(result.title, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppTheme.gray900), maxLines: 2, overflow: TextOverflow.ellipsis),
-                  ),
-                  const SizedBox(width: 6),
-                  _buildPlatformIcon(result.platform),
-                ],
-              ),
-              // Optional badges row (condition, brand, size)
-              if (result.hasCondition || result.hasBrand || result.hasSize) ...[
-                const SizedBox(height: 3),
-                Wrap(
-                  spacing: 3,
-                  runSpacing: 2,
-                  children: [
-                    if (result.hasCondition) _buildBadge(result.conditionDisplayName, _getConditionColor(result.condition!)),
-                    if (result.hasBrand) _buildBadge(result.brand!, AppTheme.primary600),
-                    if (result.hasSize) _buildBadge(result.size!, Colors.purple),
-                  ],
-                ),
-              ],
-              const SizedBox(height: 2),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(result.formattedPrice, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.primary600)),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (result.isShippable) ...[
-                        Icon(Icons.local_shipping_outlined, size: 12, color: AppTheme.gray400),
-                        const SizedBox(width: 4),
-                      ],
-                      if (result.countryCode != null && result.countryCode!.isNotEmpty) ...[
-                        Text(getCountryFlagEmoji(result.countryCode), style: const TextStyle(fontSize: 12)),
-                        const SizedBox(width: 4),
-                      ],
-                      if (result.distance != null) ...[
-                        Icon(Icons.near_me, size: 10, color: AppTheme.gray400),
-                        const SizedBox(width: 1),
-                        Text('${result.distance!.toStringAsFixed(0)}km', style: TextStyle(fontSize: 10, color: AppTheme.gray400)),
-                      ],
-                    ],
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBadge(String text, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: color.withValues(alpha: 0.3), width: 0.5),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(fontSize: 8, fontWeight: FontWeight.w500, color: color),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
-    );
-  }
-
-  Color _getConditionColor(String condition) {
-    switch (condition) {
-      case 'new':
-        return Colors.green;
-      case 'like_new':
-        return Colors.teal;
-      case 'good':
-        return Colors.blue;
-      case 'used':
-        return Colors.orange;
-      case 'acceptable':
-        return Colors.red;
-      default:
-        return AppTheme.gray500;
-    }
-  }
-
-  void _showDetailModal(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => SearchResultDetailModal(result: result),
-    );
-  }
-
-  Widget _buildPlaceholder() => Container(
-        width: double.infinity,
-        height: double.infinity,
-        color: AppTheme.gray100,
-        child: Icon(Icons.image_outlined, size: 40, color: AppTheme.gray400),
-      );
-
-  Widget _buildPlatformIcon(String platform) {
-    final lower = platform.toLowerCase();
-    if (lower == 'wallapop' || lower == 'milanuncios' || lower == 'vinted' || lower == 'backmarket' || lower == 'ebay' || lower == 'leboncoin') {
-      return SizedBox(
-        height: 20,
-        width: 20,
-        child: Image.asset('assets/images/platforms/$lower.png', fit: BoxFit.contain, errorBuilder: (_, __, ___) => _buildPlatformFallback(platform)),
-      );
-    }
-    return _buildPlatformFallback(platform);
-  }
-
-  Widget _buildPlatformFallback(String platform) {
-    final color = AppTheme.platformColor(platform);
-    final short = platform.length >= 2 ? platform.substring(0, 2).toUpperCase() : platform.toUpperCase();
-    return Container(
-      width: 20,
-      height: 20,
-      decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(4)),
-      child: Center(child: Text(short, style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: color))),
-    );
-  }
-}
-
-/// Item individual de resultado (list view)
-class _ResultListItem extends StatelessWidget {
-  final SearchResult result;
-  const _ResultListItem({super.key, required this.result});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      child: InkWell(
-        onTap: () => _showDetailModal(context),
-        borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            children: [
-              result.hasImage
-                  ? IgnorePointer(child: NetworkImageWidget(imageUrl: result.imageUrl!, width: 60, height: 60, fit: BoxFit.cover, borderRadius: BorderRadius.circular(6), errorBuilder: (_, __) => _buildPlaceholder()))
-                  : ClipRRect(borderRadius: BorderRadius.circular(6), child: _buildPlaceholder()),
-              const SizedBox(width: 12),
-              Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Imagen
+            AspectRatio(
+              aspectRatio: 1.0,
+              child: result.hasImage
+                  ? NetworkImageWidget(
+                      key: ValueKey(result.imageUrl),
+                      imageUrl: result.imageUrl!,
+                      fit: BoxFit.cover,
+                    )
+                  : Container(
+                      color: AppTheme.gray200,
+                      child: Icon(Icons.image_outlined, size: 40, color: AppTheme.gray400),
+                    ),
+            ),
+            
+            // Información (flexible para adaptarse al contenido)
+            Flexible(
+              child: Padding(
+                padding: const EdgeInsets.all(8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(result.title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.gray900), maxLines: 1, overflow: TextOverflow.ellipsis),
-                    // Optional badges row (condition, brand, size)
-                    if (result.hasCondition || result.hasBrand || result.hasSize) ...[
-                      const SizedBox(height: 3),
-                      Wrap(
-                        spacing: 4,
-                        runSpacing: 2,
-                        children: [
-                          if (result.hasCondition) _buildBadge(result.conditionDisplayName, _getConditionColor(result.condition!)),
-                          if (result.hasBrand) _buildBadge(result.brand!, AppTheme.primary600),
-                          if (result.hasSize) _buildBadge(result.size!, Colors.purple),
-                        ],
+                    Text(
+                      result.title,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
                       ),
-                    ],
-                    if (result.location != null || result.countryCode != null || result.isShippable) ...[
-                      const SizedBox(height: 2),
-                      Row(
-                        children: [
-                          if (result.isShippable) ...[
-                            Icon(Icons.local_shipping_outlined, size: 12, color: AppTheme.gray400),
-                            const SizedBox(width: 4),
-                          ],
-                          if (result.countryCode != null && result.countryCode!.isNotEmpty) ...[
-                            Text(getCountryFlagEmoji(result.countryCode), style: const TextStyle(fontSize: 12)),
-                            const SizedBox(width: 4),
-                          ],
-                          if (result.location != null) ...[
-                            Icon(Icons.location_on, size: 12, color: AppTheme.gray400),
-                            const SizedBox(width: 2),
-                            Flexible(child: Text(result.location!, style: TextStyle(fontSize: 12, color: AppTheme.gray500), maxLines: 1, overflow: TextOverflow.ellipsis)),
-                          ],
-                        ],
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${result.price.toStringAsFixed(2)} €',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.primary600,
                       ),
-                    ],
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        _ShippingIndicator(isShippable: result.isShippable, size: 12),
+                        const SizedBox(width: 6),
+                        Icon(Icons.near_me, size: 10, color: AppTheme.gray500),
+                        const SizedBox(width: 2),
+                        Expanded(
+                          child: Text(
+                            result.distance != null ? '${result.distance!.toStringAsFixed(0)} km' : '-',
+                            style: TextStyle(fontSize: 11, color: AppTheme.gray600),
+                          ),
+                        ),
+                        // Platform icon with flag
+                        PlatformIconWithFlag(
+                          platform: result.platform,
+                          countryCode: result.countryCode,
+                          size: 24,
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(result.formattedPrice, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.primary600)),
-                  const SizedBox(height: 4),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(color: AppTheme.platformColor(result.platform).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(4)),
-                    child: Text(result.platformDisplayName, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: AppTheme.platformColor(result.platform))),
-                  ),
-                ],
-              ),
-              const SizedBox(width: 8),
-              Icon(Icons.chevron_right, color: AppTheme.gray400, size: 20),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
-    );
-  }
-
-  Widget _buildBadge(String text, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: color.withValues(alpha: 0.3), width: 0.5),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: color),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
-    );
-  }
-
-  Color _getConditionColor(String condition) {
-    switch (condition) {
-      case 'new':
-        return Colors.green;
-      case 'like_new':
-        return Colors.teal;
-      case 'good':
-        return Colors.blue;
-      case 'used':
-        return Colors.orange;
-      case 'acceptable':
-        return Colors.red;
-      default:
-        return AppTheme.gray500;
-    }
-  }
-
-  void _showDetailModal(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => SearchResultDetailModal(result: result),
-    );
-  }
-
-  Widget _buildPlaceholder() => Container(width: 60, height: 60, color: AppTheme.gray100, child: Icon(Icons.image_outlined, size: 24, color: AppTheme.gray400));
-}
-
-/// Widget legacy que combina header y body (para compatibilidad)
-class SearchResultsView extends StatelessWidget {
-  final VoidCallback? onClearSearch;
-
-  const SearchResultsView({super.key, this.onClearSearch});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SearchResultsHeader(),
-        SearchResultsBody(onClearSearch: onClearSearch),
-      ],
     );
   }
 }
