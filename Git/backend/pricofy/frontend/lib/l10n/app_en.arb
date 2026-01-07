@@ -649,6 +649,20 @@
   "registrationModalBenefit4": "Complete search history",
   "registrationModalSignUp": "Sign up for free",
   "registrationModalLater": "Maybe later",
+  "registrationModalAdvancedSearch": "Activate advanced search to better filter your results.",
+  "advancedSearchPromoTitle": "Improve these results with Advanced Search",
+  "advancedSearchPromoBenefit1": "Remove unexpected results related to your search for {searchTerm}",
+  "@advancedSearchPromoBenefit1": {
+    "placeholders": {
+      "searchTerm": {
+        "type": "String"
+      }
+    }
+  },
+  "advancedSearchPromoBenefit2": "Find advanced filters for your results",
+  "advancedSearchPromoBenefit3": "Create alerts for new offers",
+  "advancedSearchPromoActivate": "Activate advanced",
+  "advancedSearchPromoNotNow": "Not now",
   "restrictedSell": "Sales searches require a registered account",
   "restrictedFavorites": "Favorites require a registered account",
   "restrictedProfile": "Profile requires a registered account",
@@ -686,5 +700,17 @@
   "locationSourcePostalCentroid": "Precise location (GPS/postal code)",
   "locationSourceCapitalFallback": "Approximate (country capital)",
   "locationSourceIpApproximate": "Approximate (IP detection)",
-  "locationSourceFallback": "Default location"
+  "locationSourceFallback": "Default location",
+
+  "sectionAllResults": "All results",
+  "sectionNearest": "Nearest",
+  "sectionCheapest": "Cheapest",
+
+  "filterExtras": "Extras",
+  "filterExtrasWarranty": "With warranty only",
+  "filterExtrasWarrantyDesc": "Products with official warranty",
+  "filterExtrasInvoice": "With invoice",
+  "filterExtrasInvoiceDesc": "Products with purchase invoice",
+  "filterExtrasBuyerProtection": "Buyer protection",
+  "filterExtrasBuyerProtectionDesc": "Platforms with return guarantee"
 }

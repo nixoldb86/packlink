@@ -634,6 +634,20 @@
   "registrationModalBenefit4": "Vollständiger Suchverlauf",
   "registrationModalSignUp": "Kostenlos registrieren",
   "registrationModalLater": "Vielleicht später",
+  "registrationModalAdvancedSearch": "Aktivieren Sie die erweiterte Suche, um Ihre Ergebnisse besser zu filtern.",
+  "advancedSearchPromoTitle": "Verbessern Sie diese Ergebnisse mit der erweiterten Suche",
+  "advancedSearchPromoBenefit1": "Entfernen Sie unerwartete Ergebnisse im Zusammenhang mit Ihrer Suche nach {searchTerm}",
+  "@advancedSearchPromoBenefit1": {
+    "placeholders": {
+      "searchTerm": {
+        "type": "String"
+      }
+    }
+  },
+  "advancedSearchPromoBenefit2": "Finden Sie erweiterte Filter für Ihre Ergebnisse",
+  "advancedSearchPromoBenefit3": "Benachrichtigungen für neue Angebote erstellen",
+  "advancedSearchPromoActivate": "Erweitert aktivieren",
+  "advancedSearchPromoNotNow": "Nicht jetzt",
   "restrictedSell": "Verkaufssuchen erfordern ein registriertes Konto",
   "restrictedFavorites": "Favoriten erfordern ein registriertes Konto",
   "restrictedProfile": "Das Profil erfordert ein registriertes Konto",
@@ -671,5 +685,17 @@
   "locationSourcePostalCentroid": "Genauer Standort (GPS/Postleitzahl)",
   "locationSourceCapitalFallback": "Ungefähr (Landeshauptstadt)",
   "locationSourceIpApproximate": "Ungefähr (IP-Erkennung)",
-  "locationSourceFallback": "Standardstandort"
+  "locationSourceFallback": "Standardstandort",
+
+  "sectionAllResults": "Alle Ergebnisse",
+  "sectionNearest": "Die nächsten",
+  "sectionCheapest": "Die günstigsten",
+
+  "filterExtras": "Extras",
+  "filterExtrasWarranty": "Nur mit Garantie",
+  "filterExtrasWarrantyDesc": "Produkte mit offizieller Garantie",
+  "filterExtrasInvoice": "Mit Rechnung",
+  "filterExtrasInvoiceDesc": "Produkte mit Kaufrechnung",
+  "filterExtrasBuyerProtection": "Käuferschutz",
+  "filterExtrasBuyerProtectionDesc": "Plattformen mit Rückgabegarantie"
 }

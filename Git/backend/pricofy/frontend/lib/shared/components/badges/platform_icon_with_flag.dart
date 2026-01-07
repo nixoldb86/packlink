@@ -2,6 +2,7 @@
 //
 // Displays platform icon with country flag overlay (like the example: Vinted + Spain flag).
 // The flag appears as a circular badge overlapping the bottom-right of the platform icon.
+// Uses circle_flags package for high-quality circular SVG flags.
 //
 // Usage:
 // ```dart
@@ -12,9 +13,9 @@
 // )
 // ```
 
+import 'package:circle_flags/circle_flags.dart';
 import 'package:flutter/material.dart';
 import '../../../config/assets.dart';
-import '../../../core/utils/country_flags.dart';
 
 class PlatformIconWithFlag extends StatelessWidget {
   final String platform;
@@ -31,9 +32,8 @@ class PlatformIconWithFlag extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final platformLogoPath = AppAssets.platformLogo(platform);
-    final flagEmoji = getCountryFlagEmoji(countryCode);
-    // Flag size: ~35% of platform icon, positioned to overlap bottom-right quadrant
-    final flagSize = size * 0.35;
+    // Flag size: ~45% of platform icon for better visibility with circle_flags
+    final flagSize = size * 0.45;
 
     return SizedBox(
       width: size,
@@ -77,11 +77,11 @@ class PlatformIconWithFlag extends StatelessWidget {
             ),
           ),
           // Country flag (circular badge, bottom-right, overlapping)
-          if (flagEmoji.isNotEmpty)
+          // Using circle_flags for high-quality SVG circular flags
+          if (countryCode != null && countryCode!.isNotEmpty)
             Positioned(
-              // Position to overlap bottom-right quadrant like in the example
-              right: size * 0.05, // Slightly inside from edge
-              bottom: size * 0.05,
+              right: -flagSize * 0.15, // Overlap slightly outside
+              bottom: -flagSize * 0.15,
               child: Container(
                 width: flagSize,
                 height: flagSize,
@@ -93,25 +93,16 @@ class PlatformIconWithFlag extends StatelessWidget {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.2),
-                      blurRadius: 2,
+                      color: Colors.black.withValues(alpha: 0.15),
+                      blurRadius: 3,
                       offset: const Offset(0, 1),
                     ),
                   ],
                 ),
                 child: ClipOval(
-                  child: Container(
-                    color: Colors.white, // White background for better emoji rendering
-                    child: Center(
-                      child: Text(
-                        flagEmoji,
-                        style: TextStyle(
-                          fontSize: flagSize * 0.75,
-                          height: 1.0, // Tight line height for better emoji rendering
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
+                  child: CircleFlag(
+                    countryCode!.toLowerCase(),
+                    size: flagSize,
                   ),
                 ),
               ),
