@@ -84,14 +84,16 @@ class _PricingSectionState extends State<PricingSection> with TickerProviderStat
     final locale = l10n.localeName;
 
     if (widget.showFullPage) {
-      return Column(
-        children: [
-          _buildHeroSection(context, locale),
-          _buildFreemiumSection(context, locale),
-          _buildTabsSection(context, locale),
-          _buildFAQSection(context, locale),
-          _buildCTASection(context, locale),
-        ],
+      return SingleChildScrollView(
+        child: Column(
+          children: [
+            _buildHeroSection(context, locale),
+            _buildFreemiumSection(context, locale),
+            _buildTabsSection(context, locale),
+            _buildFAQSection(context, locale),
+            _buildCTASection(context, locale),
+          ],
+        ),
       );
     }
 
