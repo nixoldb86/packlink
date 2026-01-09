@@ -1,179 +1,128 @@
-// Features Page - /caracteristicas
+// Features Page
 //
-// Complete features page with:
-// A) El Problema (fragmentación, irrelevantes, desconocimiento demanda)
-// B) La Solución Pricofy (4 pilares)
-// C) Flujos comprador/vendedor
-// D) Comparativa "Pricofy vs hacerlo a mano"
-// E) CTA final
+// /caracteristicas page - Full page dedicated to features
 
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 import '../../../config/theme.dart';
-import '../../../config/routes.dart';
-import '../../../config/feature_flags.dart';
 import '../../../core/extensions/l10n_extension.dart';
+import '../../../core/providers/form_provider.dart';
 import '../../../core/utils/responsive.dart';
 
+/// Features page content - layout provided by PublicLayout shell
 class FeaturesPage extends StatelessWidget {
   const FeaturesPage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final formProvider = context.read<FormProvider>();
     final l10n = context.l10n;
+    final isEs = l10n.localeName == 'es';
 
+    // Content only - layout (navbar + footer) provided by PublicLayout shell
     return Column(
       children: [
-        // Hero
-        _buildHeroSection(context, l10n),
-        // A) El Problema
-        _buildProblemSection(context, l10n),
-        // B) La Solución Pricofy
-        _buildSolutionSection(context, l10n),
-        // C) Flujos
-        _buildFlowsSection(context, l10n),
-        // D) Comparativa
-        _buildComparisonSection(context, l10n),
-        // E) CTA Final
-        _buildCTASection(context, l10n),
+        // Hero Section with gradient
+        _buildHeroSection(context, l10n, isEs, formProvider),
+
+        // Main Features Grid
+        _buildMainFeaturesSection(context, l10n),
+
+        // Detailed Features Section
+        _buildDetailedFeaturesSection(context, isEs),
+
+        // Benefits Section
+        _buildBenefitsSection(context, isEs),
+
+        // Use Cases Section
+        _buildUseCasesSection(context, l10n, isEs),
+
+        // CTA Section
+        _buildCTASection(context, l10n, isEs, formProvider),
       ],
     );
   }
 
-  // =============================================================================
-  // HERO
-  // =============================================================================
-  Widget _buildHeroSection(BuildContext context, dynamic l10n) {
-    final isMobile = context.isMobile;
-
+  // Hero Section
+  Widget _buildHeroSection(BuildContext context, dynamic l10n, bool isEs, FormProvider formProvider) {
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [AppTheme.primary600, AppTheme.primary700, Color(0xFF7C3AED)],
+          colors: [AppTheme.primary600, AppTheme.primary700, AppTheme.primary800],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
       ),
       padding: EdgeInsets.symmetric(
-        horizontal: 24,
-        vertical: isMobile ? 64 : 96,
+        horizontal: 16,
+        vertical: context.isDesktop ? 80 : 60,
       ),
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 900),
+          constraints: const BoxConstraints(maxWidth: 1280),
           child: Column(
             children: [
               Text(
-                l10n.featuresPageTitle,
+                l10n.featuresTitle,
                 style: TextStyle(
-                  fontSize: isMobile ? 36 : 56,
+                  fontSize: context.isDesktop ? 56 : 40,
                   fontWeight: FontWeight.w700,
                   color: Colors.white,
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 20),
-              Text(
-                l10n.featuresPageSubtitle,
-                style: TextStyle(
-                  fontSize: isMobile ? 16 : 20,
-                  color: AppTheme.primary100,
-                  height: 1.5,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // =============================================================================
-  // A) EL PROBLEMA
-  // =============================================================================
-  Widget _buildProblemSection(BuildContext context, dynamic l10n) {
-    final isMobile = context.isMobile;
-
-    final problems = [
-      {
-        'icon': '🌍',
-        'title': l10n.featuresProblem1Title,
-        'description': l10n.featuresProblem1Desc,
-        'stat': '60%',
-        'statLabel': l10n.featuresProblem1Stat,
-      },
-      {
-        'icon': '📦',
-        'title': l10n.featuresProblem2Title,
-        'description': l10n.featuresProblem2Desc,
-        'stat': '80%',
-        'statLabel': l10n.featuresProblem2Stat,
-      },
-      {
-        'icon': '🔍',
-        'title': l10n.featuresProblem3Title,
-        'description': l10n.featuresProblem3Desc,
-        'stat': '65%',
-        'statLabel': l10n.featuresProblem3Stat,
-      },
-    ];
-
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: 24,
-        vertical: isMobile ? 64 : 96,
-      ),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFFFEF2F2), Color(0xFFFFF7ED), Colors.white],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ),
-      ),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1100),
-          child: Column(
-            children: [
-              // Badge
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFEE2E2),
-                  borderRadius: BorderRadius.circular(20),
-                ),
+              const SizedBox(height: 24),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 600),
                 child: Text(
-                  l10n.featuresProblemBadge,
+                  l10n.featuresSubtitle,
                   style: const TextStyle(
-                    color: Color(0xFFB91C1C),
+                    fontSize: 20,
+                    color: AppTheme.primary100,
+                    height: 1.5,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              const SizedBox(height: 16),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 600),
+                child: Text(
+                  isEs
+                      ? 'Descubre todas las herramientas y funcionalidades que hacen de Pricofy la solución perfecta para optimizar tus precios.'
+                      : 'Discover all the tools and features that make Pricofy the perfect solution to optimize your prices.',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    color: AppTheme.primary200,
+                    height: 1.5,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              const SizedBox(height: 40),
+              ElevatedButton(
+                onPressed: () => formProvider.openForm(FormAction.vender),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: AppTheme.primary600,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 32,
+                    vertical: 16,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+                  ),
+                  elevation: 8,
+                ),
+                child: Text(
+                  isEs ? 'Comenzar Gratis' : 'Start Free',
+                  style: const TextStyle(
+                    fontSize: 18,
                     fontWeight: FontWeight.w600,
-                    fontSize: 14,
                   ),
                 ),
               ),
-              const SizedBox(height: 24),
-              Text(
-                l10n.featuresProblemTitle,
-                style: TextStyle(
-                  fontSize: isMobile ? 28 : 44,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.gray900,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 48),
-
-              // Problem cards
-              ...problems.map((p) => _ProblemCard(
-                    icon: p['icon'] as String,
-                    title: p['title'] as String,
-                    description: p['description'] as String,
-                    stat: p['stat'] as String,
-                    statLabel: p['statLabel'] as String,
-                    isMobile: isMobile,
-                  )),
             ],
           ),
         ),
@@ -181,94 +130,177 @@ class FeaturesPage extends StatelessWidget {
     );
   }
 
-  // =============================================================================
-  // B) LA SOLUCIÓN PRICOFY
-  // =============================================================================
-  Widget _buildSolutionSection(BuildContext context, dynamic l10n) {
-    final isMobile = context.isMobile;
-    final isDesktop = context.isDesktop;
-
-    final pillars = [
+  // Main Features Grid (4 cards)
+  Widget _buildMainFeaturesSection(BuildContext context, dynamic l10n) {
+    final features = [
       {
-        'icon': '🌍',
-        'title': l10n.featuresSolution1Title,
-        'description': l10n.featuresSolution1Desc,
+        'icon': '🧠',
+        'title': l10n.featuresAiTitle,
+        'description': l10n.featuresAiDescription,
+        'color': [AppTheme.purple500, AppTheme.pink500],
       },
       {
-        'icon': '🤖',
-        'title': l10n.featuresSolution2Title,
-        'description': l10n.featuresSolution2Desc,
+        'icon': '⚡',
+        'title': l10n.featuresRealTimeTitle,
+        'description': l10n.featuresRealTimeDescription,
+        'color': [AppTheme.blue500, AppTheme.cyan500],
       },
       {
-        'icon': '🔓',
-        'title': l10n.featuresSolution3Title,
-        'description': l10n.featuresSolution3Desc,
+        'icon': '📊',
+        'title': l10n.featuresAnalyticsTitle,
+        'description': l10n.featuresAnalyticsDescription,
+        'color': [AppTheme.green500, AppTheme.emerald500],
       },
       {
-        'icon': '🔗',
-        'title': l10n.featuresSolution4Title,
-        'description': l10n.featuresSolution4Desc,
+        'icon': '🔒',
+        'title': l10n.featuresSecurityTitle,
+        'description': l10n.featuresSecurityDescription,
+        'color': [AppTheme.orange500, AppTheme.red500],
       },
     ];
 
     return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: 24,
-        vertical: isMobile ? 64 : 96,
-      ),
-      decoration: BoxDecoration(
-        color: AppTheme.gray50,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 80),
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1100),
+          constraints: const BoxConstraints(maxWidth: 1280),
+          child: GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: context.isDesktop ? 4 : (context.isTablet ? 2 : 1),
+              crossAxisSpacing: 32,
+              mainAxisSpacing: 32,
+              childAspectRatio: context.isMobile ? 1.5 : 1.0,
+            ),
+            itemCount: features.length,
+            itemBuilder: (context, index) {
+              final feature = features[index];
+              return _buildMainFeatureCard(
+                feature['icon'] as String,
+                feature['title'] as String,
+                feature['description'] as String,
+                feature['color'] as List<Color>,
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMainFeatureCard(String icon, String title, String description, List<Color> gradientColors) {
+    return Container(
+      padding: const EdgeInsets.all(32),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(AppTheme.radiusXl),
+        border: Border.all(color: AppTheme.gray100),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: gradientColors,
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(AppTheme.radiusXl),
+            ),
+            child: Center(
+              child: Text(icon, style: const TextStyle(fontSize: 36)),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              color: AppTheme.gray900,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            description,
+            style: const TextStyle(
+              fontSize: 16,
+              color: AppTheme.gray600,
+              height: 1.5,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Detailed Features Section (6 features with bullet lists)
+  Widget _buildDetailedFeaturesSection(BuildContext context, bool isEs) {
+    final detailedFeatures = _getDetailedFeatures(isEs);
+
+    return Container(
+      color: AppTheme.gray50,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 80),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1280),
           child: Column(
             children: [
-              // Badge
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: AppTheme.primary100,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  l10n.featuresSolutionBadge,
-                  style: TextStyle(
-                    color: AppTheme.primary700,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
               Text(
-                l10n.featuresSolutionTitle,
+                isEs ? 'Funcionalidades Detalladas' : 'Detailed Features',
                 style: TextStyle(
-                  fontSize: isMobile ? 28 : 44,
+                  fontSize: context.isDesktop ? 40 : 32,
                   fontWeight: FontWeight.w700,
                   color: AppTheme.gray900,
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 48),
-
-              // Pillars grid
+              const SizedBox(height: 16),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 600),
+                child: Text(
+                  isEs
+                      ? 'Explora en profundidad todas las capacidades que Pricofy ofrece para transformar tu experiencia de compra y venta.'
+                      : 'Explore in depth all the capabilities that Pricofy offers to transform your buying and selling experience.',
+                  style: const TextStyle(
+                    fontSize: 20,
+                    color: AppTheme.gray600,
+                    height: 1.5,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              const SizedBox(height: 64),
               GridView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: isDesktop ? 2 : 1,
-                  crossAxisSpacing: 24,
-                  mainAxisSpacing: 24,
-                  childAspectRatio: isMobile ? 2.2 : 2.8,
+                  crossAxisCount: context.isDesktop ? 3 : (context.isTablet ? 2 : 1),
+                  crossAxisSpacing: 32,
+                  mainAxisSpacing: 32,
+                  childAspectRatio: context.isMobile ? 0.8 : 0.75,
                 ),
-                itemCount: pillars.length,
+                itemCount: detailedFeatures.length,
                 itemBuilder: (context, index) {
-                  final p = pillars[index];
-                  return _SolutionCard(
-                    icon: p['icon'] as String,
-                    title: p['title'] as String,
-                    description: p['description'] as String,
+                  final feature = detailedFeatures[index];
+                  return _buildDetailedFeatureCard(
+                    feature['icon'] as String,
+                    feature['title'] as String,
+                    feature['description'] as String,
+                    feature['items'] as List<String>,
                   );
                 },
               ),
@@ -279,184 +311,217 @@ class FeaturesPage extends StatelessWidget {
     );
   }
 
-  // =============================================================================
-  // C) FLUJOS COMPRADOR / VENDEDOR
-  // =============================================================================
-  Widget _buildFlowsSection(BuildContext context, dynamic l10n) {
-    final isMobile = context.isMobile;
-    final isDesktop = context.isDesktop;
+  List<Map<String, dynamic>> _getDetailedFeatures(bool isEs) {
+    return [
+      {
+        'icon': '💰',
+        'title': isEs ? 'Evaluación Inteligente de Precios' : 'Smart Price Evaluation',
+        'description': isEs
+            ? 'Obtén el precio ideal, rápido y mínimo para tu producto basado en análisis de mercado en tiempo real.'
+            : 'Get the ideal, fast and minimum price for your product based on real-time market analysis.',
+        'items': isEs
+            ? ['Análisis de miles de anuncios', 'Comparación con productos similares', 'Ajuste por estado y ubicación', 'Recomendaciones personalizadas']
+            : ['Analysis of thousands of listings', 'Comparison with similar products', 'Adjustment by condition and location', 'Personalized recommendations'],
+      },
+      {
+        'icon': '🔍',
+        'title': isEs ? 'Búsqueda Inteligente de Productos' : 'Smart Product Search',
+        'description': isEs
+            ? 'Encuentra el mejor precio disponible en múltiples plataformas de confianza con un solo clic.'
+            : 'Find the best available price on multiple trusted platforms with a single click.',
+        'items': isEs
+            ? ['Búsqueda en múltiples plataformas', 'Filtros avanzados por estado', 'Alertas de precio personalizadas', 'Comparación instantánea']
+            : ['Search across multiple platforms', 'Advanced filters by condition', 'Custom price alerts', 'Instant comparison'],
+      },
+      {
+        'icon': '📈',
+        'title': isEs ? 'Dashboard y Analíticas' : 'Dashboard & Analytics',
+        'description': isEs
+            ? 'Visualiza métricas clave, tendencias de mercado y el rendimiento de tus productos en tiempo real.'
+            : 'Visualize key metrics, market trends, and your products performance in real-time.',
+        'items': isEs
+            ? ['Gráficos de tendencias de precios', 'Historial de evaluaciones', 'Métricas de rendimiento', 'Exportación de datos']
+            : ['Price trend charts', 'Evaluation history', 'Performance metrics', 'Data export'],
+      },
+      {
+        'icon': '📧',
+        'title': isEs ? 'Informes Detallados por Email' : 'Detailed Email Reports',
+        'description': isEs
+            ? 'Recibe informes completos con recomendaciones de precio, plataformas ideales y estrategias de venta.'
+            : 'Receive comprehensive reports with price recommendations, ideal platforms and sales strategies.',
+        'items': isEs
+            ? ['Informes PDF descargables', 'Sugerencias de título y descripción', 'Análisis de competencia', 'Recomendaciones de plataformas']
+            : ['Downloadable PDF reports', 'Title and description suggestions', 'Competition analysis', 'Platform recommendations'],
+      },
+      {
+        'icon': '🎯',
+        'title': isEs ? 'Alertas Personalizadas' : 'Custom Alerts',
+        'description': isEs
+            ? 'Configura alertas para recibir notificaciones cuando encuentres productos o precios que te interesen.'
+            : 'Set up alerts to receive notifications when products or prices that interest you are found.',
+        'items': isEs
+            ? ['Alertas de precio', 'Notificaciones de nuevos productos', 'Cambios en el mercado', 'Configuración flexible']
+            : ['Price alerts', 'New product notifications', 'Market changes', 'Flexible configuration'],
+      },
+      {
+        'icon': '🖼️',
+        'title': isEs ? 'Mejora de Fotos de Anuncios' : 'Listing Photo Enhancement',
+        'description': isEs
+            ? 'Mejora automáticamente la calidad de tus fotos para hacer tus anuncios más atractivos y aumentar las ventas.'
+            : 'Automatically enhance your photo quality to make your listings more attractive and increase sales.',
+        'items': isEs
+            ? ['Optimización automática', 'Ajuste de brillo y contraste', 'Reducción de ruido', 'Formato optimizado']
+            : ['Automatic optimization', 'Brightness and contrast adjustment', 'Noise reduction', 'Optimized format'],
+      },
+    ];
+  }
 
+  Widget _buildDetailedFeatureCard(String icon, String title, String description, List<String> items) {
     return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: 24,
-        vertical: isMobile ? 64 : 96,
-      ),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1100),
-          child: Column(
-            children: [
-              Text(
-                l10n.featuresFlowsTitle,
-                style: TextStyle(
-                  fontSize: isMobile ? 28 : 44,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.gray900,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 48),
-
-              if (isDesktop)
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(child: _buildBuyerFlow(l10n)),
-                    const SizedBox(width: 32),
-                    Expanded(child: _buildSellerFlow(l10n)),
-                  ],
-                )
-              else
-                Column(
-                  children: [
-                    _buildBuyerFlow(l10n),
-                    const SizedBox(height: 32),
-                    _buildSellerFlow(l10n),
-                  ],
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBuyerFlow(dynamic l10n) {
-    final steps = [
-      l10n.featuresFlowBuyer1,
-      l10n.featuresFlowBuyer2,
-      l10n.featuresFlowBuyer3,
-      l10n.featuresFlowBuyer4,
-    ];
-
-    return _FlowCard(
-      icon: '🛒',
-      title: l10n.featuresFlowBuyerTitle,
-      steps: steps,
-      gradientColors: [AppTheme.primary500, const Color(0xFF9333EA)],
-    );
-  }
-
-  Widget _buildSellerFlow(dynamic l10n) {
-    final steps = [
-      l10n.featuresFlowSeller1,
-      l10n.featuresFlowSeller2,
-      l10n.featuresFlowSeller3,
-      l10n.featuresFlowSeller4,
-      l10n.featuresFlowSeller5,
-    ];
-
-    return _FlowCard(
-      icon: '💼',
-      title: l10n.featuresFlowSellerTitle,
-      steps: steps,
-      gradientColors: [const Color(0xFF10B981), const Color(0xFF059669)],
-    );
-  }
-
-  // =============================================================================
-  // D) COMPARATIVA "PRICOFY VS HACERLO A MANO"
-  // =============================================================================
-  Widget _buildComparisonSection(BuildContext context, dynamic l10n) {
-    final isMobile = context.isMobile;
-
-    final comparisons = [
-      {
-        'feature': l10n.featuresCompare1Feature,
-        'manual': l10n.featuresCompare1Manual,
-        'pricofy': l10n.featuresCompare1Pricofy,
-      },
-      {
-        'feature': l10n.featuresCompare2Feature,
-        'manual': l10n.featuresCompare2Manual,
-        'pricofy': l10n.featuresCompare2Pricofy,
-      },
-      {
-        'feature': l10n.featuresCompare3Feature,
-        'manual': l10n.featuresCompare3Manual,
-        'pricofy': l10n.featuresCompare3Pricofy,
-      },
-      {
-        'feature': l10n.featuresCompare4Feature,
-        'manual': l10n.featuresCompare4Manual,
-        'pricofy': l10n.featuresCompare4Pricofy,
-      },
-      {
-        'feature': l10n.featuresCompare5Feature,
-        'manual': l10n.featuresCompare5Manual,
-        'pricofy': l10n.featuresCompare5Pricofy,
-      },
-      {
-        'feature': l10n.featuresCompare6Feature,
-        'manual': l10n.featuresCompare6Manual,
-        'pricofy': l10n.featuresCompare6Pricofy,
-      },
-    ];
-
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: 24,
-        vertical: isMobile ? 64 : 96,
-      ),
+      padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
-        color: AppTheme.gray50,
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(AppTheme.radiusXl),
+        border: Border.all(color: AppTheme.gray100),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(icon, style: const TextStyle(fontSize: 48)),
+          const SizedBox(height: 16),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w700,
+              color: AppTheme.gray900,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            description,
+            style: const TextStyle(
+              fontSize: 16,
+              color: AppTheme.gray600,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 24),
+          ...items.map((item) => Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.check, color: AppTheme.primary600, size: 20),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    item,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: AppTheme.gray700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          )),
+        ],
+      ),
+    );
+  }
+
+  // Benefits Section (4 benefits)
+  Widget _buildBenefitsSection(BuildContext context, bool isEs) {
+    final benefits = [
+      {
+        'icon': '⏱️',
+        'title': isEs ? 'Ahorra Tiempo' : 'Save Time',
+        'description': isEs
+            ? 'No más búsquedas manuales. Encuentra el mejor precio en segundos.'
+            : 'No more manual searches. Find the best price in seconds.',
+      },
+      {
+        'icon': '💵',
+        'title': isEs ? 'Maximiza Ingresos' : 'Maximize Revenue',
+        'description': isEs
+            ? 'Vende al precio óptimo basado en datos reales del mercado.'
+            : 'Sell at the optimal price based on real market data.',
+      },
+      {
+        'icon': '📊',
+        'title': isEs ? 'Decisión Informada' : 'Informed Decision',
+        'description': isEs
+            ? 'Toma decisiones de pricing inteligentes respaldadas por datos.'
+            : 'Make smart pricing decisions backed by data.',
+      },
+      {
+        'icon': '🏆',
+        'title': isEs ? 'Competitividad' : 'Competitiveness',
+        'description': isEs
+            ? 'Mantente siempre competitivo con precios actualizados en tiempo real.'
+            : 'Stay competitive with real-time updated prices.',
+      },
+    ];
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 80),
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1100),
+          constraints: const BoxConstraints(maxWidth: 1280),
           child: Column(
             children: [
               Text(
-                l10n.featuresCompareTitle,
+                isEs ? 'Beneficios Clave' : 'Key Benefits',
                 style: TextStyle(
-                  fontSize: isMobile ? 28 : 44,
+                  fontSize: context.isDesktop ? 40 : 32,
                   fontWeight: FontWeight.w700,
                   color: AppTheme.gray900,
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 48),
-
-              // Comparison table/cards
-              if (isMobile)
-                ...comparisons.map((c) => _ComparisonCardMobile(
-                      feature: c['feature'] as String,
-                      manual: c['manual'] as String,
-                      pricofy: c['pricofy'] as String,
-                    ))
-              else
-                _ComparisonTable(comparisons: comparisons, l10n: l10n),
-
-              const SizedBox(height: 32),
-
-              // Closing statement
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppTheme.primary200),
-                ),
+              const SizedBox(height: 16),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 600),
                 child: Text(
-                  l10n.featuresCompareConclusion,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: AppTheme.gray700,
-                    fontStyle: FontStyle.italic,
+                  isEs
+                      ? 'Descubre por qué miles de usuarios confían en Pricofy para optimizar sus operaciones de compra y venta.'
+                      : 'Discover why thousands of users trust Pricofy to optimize their buying and selling operations.',
+                  style: const TextStyle(
+                    fontSize: 20,
+                    color: AppTheme.gray600,
+                    height: 1.5,
                   ),
                   textAlign: TextAlign.center,
                 ),
               ),
+              const SizedBox(height: 64),
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: context.isDesktop ? 4 : (context.isTablet ? 2 : 1),
+                  crossAxisSpacing: 32,
+                  mainAxisSpacing: 32,
+                  childAspectRatio: context.isMobile ? 1.5 : 1.2,
+                ),
+                itemCount: benefits.length,
+                itemBuilder: (context, index) {
+                  final benefit = benefits[index];
+                  return _buildBenefitCard(
+                    benefit['icon'] as String,
+                    benefit['title'] as String,
+                    benefit['description'] as String,
+                  );
+                },
+              ),
             ],
           ),
         ),
@@ -464,575 +529,285 @@ class FeaturesPage extends StatelessWidget {
     );
   }
 
-  // =============================================================================
-  // E) CTA FINAL
-  // =============================================================================
-  Widget _buildCTASection(BuildContext context, dynamic l10n) {
-    final isMobile = context.isMobile;
+  Widget _buildBenefitCard(String icon, String title, String description) {
+    return Column(
+      children: [
+        Container(
+          width: 80,
+          height: 80,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [AppTheme.primary100, AppTheme.primary200],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(AppTheme.radiusFull),
+          ),
+          child: Center(
+            child: Text(icon, style: const TextStyle(fontSize: 40)),
+          ),
+        ),
+        const SizedBox(height: 24),
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+            color: AppTheme.gray900,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 12),
+        Text(
+          description,
+          style: const TextStyle(
+            fontSize: 16,
+            color: AppTheme.gray600,
+            height: 1.5,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
 
+  // Use Cases Section
+  Widget _buildUseCasesSection(BuildContext context, dynamic l10n, bool isEs) {
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [AppTheme.primary600, Color(0xFF7C3AED)],
+          colors: [AppTheme.primary50, Colors.white],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
       ),
-      padding: EdgeInsets.symmetric(
-        horizontal: 24,
-        vertical: isMobile ? 64 : 96,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 80),
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 600),
+          constraints: const BoxConstraints(maxWidth: 1280),
           child: Column(
             children: [
               Text(
-                l10n.featuresCtaTitle,
+                l10n.useCasesTitle,
                 style: TextStyle(
-                  fontSize: isMobile ? 32 : 44,
+                  fontSize: context.isDesktop ? 40 : 32,
                   fontWeight: FontWeight.w700,
-                  color: Colors.white,
+                  color: AppTheme.gray900,
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 32),
-              Wrap(
-                alignment: WrapAlignment.center,
-                spacing: 16,
-                runSpacing: 12,
-                children: [
-                  ElevatedButton(
-                    onPressed: () => context.go(FeatureFlags.loginRoute),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: AppTheme.primary600,
-                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      elevation: 0,
+              const SizedBox(height: 64),
+              context.isMobile
+                  ? Column(
+                      children: [
+                        _buildUseCaseCard(context, l10n, isEs, true),
+                        const SizedBox(height: 48),
+                        _buildUseCaseCard(context, l10n, isEs, false),
+                      ],
+                    )
+                  : Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(child: _buildUseCaseCard(context, l10n, isEs, true)),
+                        const SizedBox(width: 48),
+                        Expanded(child: _buildUseCaseCard(context, l10n, isEs, false)),
+                      ],
                     ),
-                    child: Text(
-                      l10n.featuresCtaButton,
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                    ),
-                  ),
-                  OutlinedButton(
-                    onPressed: () => context.go(AppRoutes.pricing),
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Colors.white, width: 2),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: Text(
-                      l10n.featuresCtaSecondary,
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                    ),
-                  ),
-                ],
-              ),
             ],
           ),
         ),
       ),
     );
   }
-}
 
-// =============================================================================
-// HELPER WIDGETS
-// =============================================================================
-
-class _ProblemCard extends StatelessWidget {
-  final String icon;
-  final String title;
-  final String description;
-  final String stat;
-  final String statLabel;
-  final bool isMobile;
-
-  const _ProblemCard({
-    required this.icon,
-    required this.title,
-    required this.description,
-    required this.stat,
-    required this.statLabel,
-    required this.isMobile,
-  });
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildUseCaseCard(BuildContext context, dynamic l10n, bool isEs, bool isSell) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 20),
-      padding: EdgeInsets.all(isMobile ? 20 : 28),
+      padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFFECDD3)),
+        borderRadius: BorderRadius.circular(AppTheme.radiusXl),
+        border: Border.all(color: AppTheme.gray100),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 20,
             offset: const Offset(0, 4),
           ),
         ],
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFFFEE2E2), Color(0xFFFED7AA)],
-              ),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Center(
-              child: Text(icon, style: const TextStyle(fontSize: 28)),
-            ),
-          ),
-          const SizedBox(width: 20),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: isMobile ? 18 : 22,
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.gray900,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  description,
-                  style: TextStyle(
-                    fontSize: isMobile ? 14 : 16,
-                    color: AppTheme.gray600,
-                    height: 1.5,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFEF2F2),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: RichText(
-                    text: TextSpan(
-                      children: [
-                        TextSpan(
-                          text: stat,
-                          style: const TextStyle(
-                            color: Color(0xFFB91C1C),
-                            fontWeight: FontWeight.w700,
-                            fontSize: 14,
-                          ),
-                        ),
-                        TextSpan(
-                          text: ' $statLabel',
-                          style: const TextStyle(
-                            color: Color(0xFFB91C1C),
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SolutionCard extends StatelessWidget {
-  final String icon;
-  final String title;
-  final String description;
-
-  const _SolutionCard({
-    required this.icon,
-    required this.title,
-    required this.description,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.primary100),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 20,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [AppTheme.primary500, const Color(0xFF9333EA)],
-              ),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Center(
-              child: Text(icon, style: const TextStyle(fontSize: 26)),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.gray900,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  description,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: AppTheme.gray600,
-                    height: 1.4,
-                  ),
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _FlowCard extends StatelessWidget {
-  final String icon;
-  final String title;
-  final List<String> steps;
-  final List<Color> gradientColors;
-
-  const _FlowCard({
-    required this.icon,
-    required this.title,
-    required this.steps,
-    required this.gradientColors,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(28),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: gradientColors[0].withValues(alpha: 0.2)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 20,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(colors: gradientColors),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Center(
-                  child: Text(icon, style: const TextStyle(fontSize: 26)),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.gray900,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          ...steps.asMap().entries.map((entry) => Padding(
-                padding: const EdgeInsets.only(bottom: 14),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: 28,
-                      height: 28,
-                      decoration: BoxDecoration(
-                        color: gradientColors[0].withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Center(
-                        child: Text(
-                          '${entry.key + 1}',
-                          style: TextStyle(
-                            color: gradientColors[0],
-                            fontWeight: FontWeight.w700,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: 4),
-                        child: Text(
-                          entry.value,
-                          style: const TextStyle(
-                            fontSize: 15,
-                            color: AppTheme.gray700,
-                            height: 1.4,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              )),
-        ],
-      ),
-    );
-  }
-}
-
-class _ComparisonTable extends StatelessWidget {
-  final List<Map<String, String>> comparisons;
-  final dynamic l10n;
-
-  const _ComparisonTable({required this.comparisons, required this.l10n});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.gray200),
-      ),
-      child: Column(
-        children: [
-          // Header
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-            decoration: BoxDecoration(
-              color: AppTheme.gray50,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
-            ),
-            child: Row(
-              children: [
-                const Expanded(
-                  flex: 2,
-                  child: Text(
-                    '',
-                    style: TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                ),
-                Expanded(
-                  flex: 3,
-                  child: Center(
-                    child: Text(
-                      l10n.featuresCompareManualHeader,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.gray600,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-                ),
-                Expanded(
-                  flex: 3,
-                  child: Center(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [AppTheme.primary500, const Color(0xFF9333EA)],
-                        ),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        l10n.featuresComparePricofyHeader,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // Rows
-          ...comparisons.asMap().entries.map((entry) {
-            final c = entry.value;
-            final isLast = entry.key == comparisons.length - 1;
-            return Container(
-              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-              decoration: BoxDecoration(
-                border: isLast ? null : Border(bottom: BorderSide(color: AppTheme.gray100)),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    flex: 2,
-                    child: Text(
-                      c['feature']!,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.gray800,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    flex: 3,
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Icon(Icons.close, color: Color(0xFFEF4444), size: 18),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            c['manual']!,
-                            style: const TextStyle(fontSize: 13, color: AppTheme.gray600),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Expanded(
-                    flex: 3,
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Icon(Icons.check_circle, color: Color(0xFF10B981), size: 18),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            c['pricofy']!,
-                            style: const TextStyle(fontSize: 13, color: AppTheme.gray700),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }),
-        ],
-      ),
-    );
-  }
-}
-
-class _ComparisonCardMobile extends StatelessWidget {
-  final String feature;
-  final String manual;
-  final String pricofy;
-
-  const _ComparisonCardMobile({
-    required this.feature,
-    required this.manual,
-    required this.pricofy,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.gray200),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            feature,
+            isSell ? '💰' : '🔍',
+            style: const TextStyle(fontSize: 48),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            isSell ? l10n.useCasesSellTitle : l10n.useCasesBuyTitle,
             style: const TextStyle(
+              fontSize: 24,
               fontWeight: FontWeight.w700,
               color: AppTheme.gray900,
-              fontSize: 16,
             ),
           ),
           const SizedBox(height: 16),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Icon(Icons.close, color: Color(0xFFEF4444), size: 18),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  manual,
-                  style: const TextStyle(fontSize: 13, color: AppTheme.gray600),
-                ),
-              ),
-            ],
+          Text(
+            isSell ? l10n.useCasesSellDescription : l10n.useCasesBuyDescription,
+            style: const TextStyle(
+              fontSize: 16,
+              color: AppTheme.gray600,
+              height: 1.5,
+            ),
           ),
-          const SizedBox(height: 12),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Icon(Icons.check_circle, color: Color(0xFF10B981), size: 18),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  pricofy,
-                  style: const TextStyle(fontSize: 13, color: AppTheme.gray700, fontWeight: FontWeight.w500),
-                ),
-              ),
-            ],
-          ),
+          const SizedBox(height: 24),
+          _buildUseCaseStep(1, isSell ? l10n.useCasesSellStep1 : l10n.useCasesBuyStep1),
+          const SizedBox(height: 16),
+          _buildUseCaseStep(2, isSell ? l10n.useCasesSellStep2 : l10n.useCasesBuyStep2),
+          const SizedBox(height: 16),
+          _buildUseCaseStep(3, isSell ? l10n.useCasesSellStep3 : l10n.useCasesBuyStep3),
         ],
+      ),
+    );
+  }
+
+  Widget _buildUseCaseStep(int number, String text) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: AppTheme.primary100,
+            borderRadius: BorderRadius.circular(AppTheme.radiusFull),
+          ),
+          child: Center(
+            child: Text(
+              number.toString(),
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.primary600,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              text,
+              style: const TextStyle(
+                fontSize: 16,
+                color: AppTheme.gray700,
+                height: 1.5,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // CTA Section
+  Widget _buildCTASection(BuildContext context, dynamic l10n, bool isEs, FormProvider formProvider) {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [AppTheme.primary600, AppTheme.primary800],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 80),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 800),
+          child: Column(
+            children: [
+              Text(
+                l10n.ctaTitle,
+                style: TextStyle(
+                  fontSize: context.isDesktop ? 40 : 32,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              Text(
+                l10n.ctaDescription,
+                style: const TextStyle(
+                  fontSize: 20,
+                  color: AppTheme.primary100,
+                  height: 1.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 40),
+              context.isMobile
+                  ? Column(
+                      children: [
+                        _buildCTAButton(
+                          isEs ? 'Comenzar Gratis' : 'Start Free',
+                          () => formProvider.openForm(FormAction.vender),
+                          true,
+                        ),
+                        const SizedBox(height: 16),
+                        _buildCTAButton(
+                          isEs ? 'Hablar con Ventas' : 'Talk to Sales',
+                          () => formProvider.openForm(FormAction.comprar),
+                          false,
+                        ),
+                      ],
+                    )
+                  : Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _buildCTAButton(
+                          isEs ? 'Comenzar Gratis' : 'Start Free',
+                          () => formProvider.openForm(FormAction.vender),
+                          true,
+                        ),
+                        const SizedBox(width: 16),
+                        _buildCTAButton(
+                          isEs ? 'Hablar con Ventas' : 'Talk to Sales',
+                          () => formProvider.openForm(FormAction.comprar),
+                          false,
+                        ),
+                      ],
+                    ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCTAButton(String text, VoidCallback onPressed, bool isPrimary) {
+    return ElevatedButton(
+      onPressed: onPressed,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: isPrimary ? Colors.white : Colors.transparent,
+        foregroundColor: isPrimary ? AppTheme.primary600 : Colors.white,
+        side: isPrimary ? null : const BorderSide(color: Colors.white, width: 2),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 32,
+          vertical: 16,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+        ),
+        elevation: isPrimary ? 8 : 0,
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }

@@ -697,5 +697,10 @@
   "filterExtrasInvoice": "Com fatura",
   "filterExtrasInvoiceDesc": "Produtos com fatura de compra",
   "filterExtrasBuyerProtection": "Proteção ao comprador",
-  "filterExtrasBuyerProtectionDesc": "Plataformas com garantia de devolução"
+  "filterExtrasBuyerProtectionDesc": "Plataformas com garantia de devolução",
+
+  "mapLegendTitle": "LEGENDA",
+  "mapLegendExactLocation": "Localização exata",
+  "mapLegendCityLevel": "Nível cidade",
+  "mapNoLocationTitle": "Sem localização precisa"
 }

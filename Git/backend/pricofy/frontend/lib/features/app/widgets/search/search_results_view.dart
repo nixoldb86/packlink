@@ -653,6 +653,7 @@ class _CountryPills extends StatefulWidget {
 
 class _CountryPillsState extends State<_CountryPills> {
   Set<String> _selectedCountries = {};
+  bool _initialized = false;
 
   void _applyCountryFilter(SearchProvider searchProvider) {
     final currentFilters = searchProvider.filters;
@@ -666,12 +667,17 @@ class _CountryPillsState extends State<_CountryPills> {
   Widget build(BuildContext context) {
     final searchProvider = context.watch<SearchProvider>();
     final countries = searchProvider.availableCountries;
+    final filterCountries = searchProvider.filters.countries;
 
     if (countries.isEmpty) return const SizedBox.shrink();
 
-    // Initialize all countries as selected if first time
-    if (_selectedCountries.isEmpty && countries.isNotEmpty) {
+    // Sync with provider filters - if provider has explicit countries, use those
+    if (filterCountries.isNotEmpty) {
+      _selectedCountries = Set.from(filterCountries);
+    } else if (!_initialized && countries.isNotEmpty) {
+      // Initialize all countries as selected only the first time
       _selectedCountries = Set.from(countries);
+      _initialized = true;
     }
 
     return SingleChildScrollView(
